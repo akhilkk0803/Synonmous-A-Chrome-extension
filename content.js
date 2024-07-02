@@ -30,11 +30,42 @@ function createPopup() {
   return popup;
 }
 
+function pronunciationPopup(text) {
+  let popup = document.getElementById("pronunciation-popup");
+  if (!popup) {
+    popup = createPopup();
+    popup.id = "pronunciation-popup";
+    document.body.appendChild(popup);
+  }
+
+  popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Pronunciation</strong>
+      <button id="close-pronunciation" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
+    </div>
+    <p>${text}</p>
+    <button id="play-pronunciation" style="padding: 5px 10px; margin-top: 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Play Pronunciation</button>
+  `;
+
+  document
+    .getElementById("close-pronunciation")
+    .addEventListener("click", () => {
+      popup.remove();
+    });
+
+  document
+    .getElementById("play-pronunciation")
+    .addEventListener("click", () => {
+      playPronunciation(text);
+    });
+}
+
 function updateMeaningPopup() {
   const definition =
     "Meaning of the selected word is:<br/>" +
     (meaningsData[0]?.meanings[0]?.definitions[index]?.definition ||
       "No definition found.");
+  const word = meaningsData[0]?.word || "No word found";
   console.log("Definition to display:", definition);
 
   let popup = document.getElementById("meaning-popup");
@@ -54,6 +85,7 @@ function updateMeaningPopup() {
       <button id="prev-meaning" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Previous</button>
       <button id="next-meaning" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Next</button>
     </div>
+    <button id="play-pronunciation" style="padding: 5px 10px; margin-top: 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Play Pronunciation</button>
   `;
 
   document.getElementById("close-meaning").addEventListener("click", () => {
@@ -74,6 +106,12 @@ function updateMeaningPopup() {
       updateMeaningPopup();
     }
   });
+
+  document
+    .getElementById("play-pronunciation")
+    .addEventListener("click", () => {
+      playPronunciation(word);
+    });
 }
 
 function updateSummaryPopup() {
@@ -119,6 +157,11 @@ function updateSummaryPopup() {
   });
 }
 
+function playPronunciation(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  speechSynthesis.speak(utterance);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showMeaningPopup") {
     index = 0;
@@ -127,5 +170,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showSummaryPopup") {
     summarIndex = 0;
     showSummaryPopup(message.data);
+  }
+  if (message.action === "showPronunciationPopup") {
+    pronunciationPopup(message.data);
   }
 });

@@ -9,7 +9,7 @@ const headers = {
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Extension installed");
 
-  // Create context menu items for both features
+  // Create context menu items for features
   chrome.contextMenus.create({
     id: "getTextMeaning",
     title: "Get Text Meaning",
@@ -27,12 +27,17 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Pronounce Text",
     contexts: ["selection"],
   });
+
+  chrome.contextMenus.create({
+    id: "translateText",
+    title: "Translate Text",
+    contexts: ["selection"],
+  });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   console.log("Context menu item clicked");
 
-  // Handle Get Text Meaning functionality
   if (info.menuItemId === "getTextMeaning") {
     console.log("Selected text:", info.selectionText);
     const meaningData = await getSelectedTextMeaning(info.selectionText);
@@ -51,7 +56,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     );
   }
 
-  // Handle Summarize Text functionality
   if (info.menuItemId === "summarizeText") {
     console.log("Selected text for summarization:", info.selectionText);
 
@@ -71,7 +75,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     );
   }
 
-  // Handle Pronounce Text functionality
   if (info.menuItemId === "Pronunce") {
     console.log("Selected text for pronunciation:", info.selectionText);
     const res = await pronunceText(info.selectionText);
@@ -85,6 +88,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         chrome.tabs.sendMessage(tab.id, {
           action: "showPronunciationPopup",
           data: { res, text: info.selectionText },
+        });
+      }
+    );
+  }
+
+  if (info.menuItemId === "translateText") {
+    console.log("Selected text for translation:", info.selectionText);
+
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tab.id },
+        files: ["content.js"],
+      },
+      () => {
+        chrome.tabs.sendMessage(tab.id, {
+          action: "showLanguageSelectionPopup",
+          data: info.selectionText,
         });
       }
     );
@@ -166,3 +186,51 @@ async function pronunceText(text) {
     return "Failed to Pronounce text";
   }
 }
+
+async function translateText(text, targetLanguage) {
+  try {
+    const payload = {
+      numResults: 1,
+      temperature: 0.7,
+      messages: [
+        {
+          text: `Translate this text to ${targetLanguage}: "${text}"`,
+          role: "user",
+        },
+      ],
+      system:
+        "You are an AI assistant for translation. Your responses should be informative and concise.",
+    };
+    console.log(text);
+    console.log(targetLanguage);
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to translate text");
+    }
+    const data = await response.json();
+    console.log(data);
+    return data.outputs[0].text;
+  } catch (error) {
+    console.error("Error translating text:", error);
+    return "Failed to translate text";
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "translateSelectedText") {
+    translateText(message.text, message.targetLanguage)
+      .then((translation) => {
+        console.log("Translation:", translation);
+        sendResponse({ translation });
+      })
+      .catch((error) => {
+        console.error("Error translating:", error);
+        sendResponse({ translation: null }); // Handle error case
+      });
+    return true; // Indicates that sendResponse will be called asynchronously
+  }
+});

@@ -29,6 +29,81 @@ function createPopup() {
   popup.style.zIndex = "10000";
   return popup;
 }
+function showTranslationPopup(translation) {
+  const popup = createPopup();
+  popup.id = "translation-popup";
+  popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Translation</strong>
+      <button id="close-translation" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
+    </div>
+    <p style="margin-top: 10px;">${translation}</p>
+  `;
+  
+  // Append popup to the document body
+  document.body.appendChild(popup);
+
+  // Add event listener for close button
+  document.getElementById("close-translation").addEventListener("click", () => {
+    popup.remove();
+  });
+}
+
+function showLanguageSelectionPopup(text) {
+  const popup = createPopup();
+  popup.id = "language-selection-popup";
+  popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Select Language</strong>
+      <button id="close-language-selection" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
+    </div>
+    <select id="language-select" style="margin-top: 10px; padding: 5px; width: 100%;">
+      <option value="Spanish">Spanish</option>
+      <option value="French">French</option>
+      <option value="German">German</option>
+      <option value="Chinese">Chinese</option>
+      <option value="Japanese">Japanese</option>
+      <option value="Hindi">Hindi</option>
+      <option value="Kannada">Kannada</option>
+    </select>
+    <button id="translate-button" style="padding: 10px; margin-top: 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Translate</button>
+  `;
+
+  // Append popup to the document body
+  document.body.appendChild(popup);
+
+  // Add event listener for close button
+  document
+    .getElementById("close-language-selection")
+    .addEventListener("click", () => {
+      popup.remove();
+    });
+
+  // Add event listener for translate button
+  document.getElementById("translate-button").addEventListener("click", () => {
+    const selectedLanguage = document.getElementById("language-select").value;
+
+    // Log selected language for debugging
+    console.log("Selected language:", selectedLanguage);
+
+    // Send message to background script to translate text
+    chrome.runtime.sendMessage(
+      {
+        action: "translateSelectedText",
+        text: text,
+        targetLanguage: selectedLanguage,
+      },
+      (response) => {
+        // Log translation response for debugging
+        console.log("Translation response:", response);
+
+        showTranslationPopup(response.translation);
+
+        popup.remove();
+      }
+    );
+  });
+}
 
 function pronunciationPopup(data) {
   let popup = document.getElementById("pronunciation-popup");
@@ -173,5 +248,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === "showPronunciationPopup") {
     pronunciationPopup(message.data);
+  }
+  if (message.action === "showLanguageSelectionPopup") {
+    showLanguageSelectionPopup(message.data);
   }
 });

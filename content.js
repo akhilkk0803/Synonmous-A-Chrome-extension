@@ -30,7 +30,7 @@ function createPopup() {
   return popup;
 }
 
-function pronunciationPopup(text) {
+function pronunciationPopup(data) {
   let popup = document.getElementById("pronunciation-popup");
   if (!popup) {
     popup = createPopup();
@@ -43,7 +43,7 @@ function pronunciationPopup(text) {
       <strong>Pronunciation</strong>
       <button id="close-pronunciation" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
     </div>
-    <p>${text}</p>
+    <p>${data.res}</p>
     <button id="play-pronunciation" style="padding: 5px 10px; margin-top: 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Play Pronunciation</button>
   `;
 
@@ -56,7 +56,7 @@ function pronunciationPopup(text) {
   document
     .getElementById("play-pronunciation")
     .addEventListener("click", () => {
-      playPronunciation(text);
+      playPronunciation(data.text);
     });
 }
 

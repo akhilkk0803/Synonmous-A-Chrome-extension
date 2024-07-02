@@ -84,7 +84,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       () => {
         chrome.tabs.sendMessage(tab.id, {
           action: "showPronunciationPopup",
-          data: res,
+          data: { res, text: info.selectionText },
         });
       }
     );

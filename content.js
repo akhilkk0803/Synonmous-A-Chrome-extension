@@ -1,20 +1,16 @@
 let index = 0;
+let summarIndex = 0;
 let meaningsData = null;
+let summariesData = null;
 
 function showMeaningPopup(data) {
   meaningsData = data;
-  updatePopup();
+  updateMeaningPopup();
 }
 
 function showSummaryPopup(data) {
-  const popup = createPopup();
-  popup.innerHTML = `
-    <p id="close">X</p>
-    <p>${data}</p>`;
-  document.body.appendChild(popup);
-  setTimeout(() => {
-    popup.remove();
-  }, 10000);
+  summariesData = data;
+  updateSummaryPopup();
 }
 
 function createPopup() {
@@ -22,37 +18,45 @@ function createPopup() {
   popup.style.position = "fixed";
   popup.style.top = "10px";
   popup.style.right = "10px";
-  popup.style.padding = "10px";
+  popup.style.padding = "15px";
   popup.style.color = "white";
-  popup.style.backgroundColor = "black";
-  popup.style.border = "1px solid black";
+  popup.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+  popup.style.border = "1px solid #333";
   popup.style.borderRadius = "10px";
+  popup.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.3)";
+  popup.style.maxWidth = "300px";
+  popup.style.fontFamily = "Arial, sans-serif";
   popup.style.zIndex = "10000";
   return popup;
 }
 
-function updatePopup() {
+function updateMeaningPopup() {
   const definition =
-    "Meaning of the selected word is <br/>" +
+    "Meaning of the selected word is:<br/>" +
     (meaningsData[0]?.meanings[0]?.definitions[index]?.definition ||
       "No definition found.");
   console.log("Definition to display:", definition);
 
-  let popup = document.getElementById("popup");
+  let popup = document.getElementById("meaning-popup");
   if (!popup) {
     popup = createPopup();
-    popup.id = "popup";
+    popup.id = "meaning-popup";
     document.body.appendChild(popup);
   }
 
   popup.innerHTML = `
-    <p id="close">X</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Word Meaning</strong>
+      <button id="close-meaning" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
+    </div>
     <p>${definition}</p>
-    <button id="prev-meaning">Previous</button>
-    <button id="next-meaning">Next</button>
+    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+      <button id="prev-meaning" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Previous</button>
+      <button id="next-meaning" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Next</button>
+    </div>
   `;
 
-  document.getElementById("close").addEventListener("click", () => {
+  document.getElementById("close-meaning").addEventListener("click", () => {
     index = 0;
     popup.remove();
   });
@@ -60,20 +64,59 @@ function updatePopup() {
   document.getElementById("prev-meaning").addEventListener("click", () => {
     if (index > 0) {
       index--;
-      updatePopup();
+      updateMeaningPopup();
     }
   });
 
   document.getElementById("next-meaning").addEventListener("click", () => {
     if (index < meaningsData[0]?.meanings[0]?.definitions.length - 1) {
       index++;
-      updatePopup();
+      updateMeaningPopup();
+    }
+  });
+}
+
+function updateSummaryPopup() {
+  const summary = summariesData[summarIndex]?.text || "No summary found.";
+  console.log("Summary to display:", summary);
+
+  let popup = document.getElementById("summary-popup");
+  if (!popup) {
+    popup = createPopup();
+    popup.id = "summary-popup";
+    document.body.appendChild(popup);
+  }
+
+  popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Summary</strong>
+      <button id="close-summary" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer;">X</button>
+    </div>
+    <p>${summary}</p>
+    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+      <button id="prev-summary" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Previous</button>
+      <button id="next-summary" style="padding: 5px 10px; border: none; background: #444; color: white; border-radius: 5px; cursor: pointer;">Next</button>
+    </div>
+  `;
+
+  document.getElementById("close-summary").addEventListener("click", () => {
+    summarIndex = 0;
+    popup.remove();
+  });
+
+  document.getElementById("prev-summary").addEventListener("click", () => {
+    if (summarIndex > 0) {
+      summarIndex--;
+      updateSummaryPopup();
     }
   });
 
-  setTimeout(() => {
-    popup.remove();
-  }, 5000);
+  document.getElementById("next-summary").addEventListener("click", () => {
+    if (summarIndex < summariesData.length - 1) {
+      summarIndex++;
+      updateSummaryPopup();
+    }
+  });
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -82,6 +125,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     showMeaningPopup(message.data);
   }
   if (message.action === "showSummaryPopup") {
+    summarIndex = 0;
     showSummaryPopup(message.data);
   }
 });

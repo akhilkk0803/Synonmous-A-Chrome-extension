@@ -104,8 +104,7 @@ async function summarizeText(text) {
     }
 
     const data = await response.json();
-    console.log(data.outputs[0].text);
-    return data.outputs[0].text;
+    return data.outputs;
   } catch (error) {
     console.error("Error summarizing text:", error);
     return "Failed to summarize text";

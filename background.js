@@ -3,7 +3,7 @@ const url = "https://api.ai21.com/studio/v1/j2-ultra/chat";
 const headers = {
   accept: "application/json",
   "content-type": "application/json",
-  Authorization: "Bearer A5ZBlX98L7kJhU5ofzZjJ7ZzrfT3ZU5S",
+  Authorization: "Bearer 2GgDhC6OzLMs22OZgvZ0jxvS22VffX3C",
 };
 
 chrome.runtime.onInstalled.addListener(() => {
